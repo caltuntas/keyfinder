@@ -3,80 +3,49 @@
 #include<fcntl.h>
 #include<unistd.h>
 #include<string.h>
+#include<stdbool.h>
 #include<sys/stat.h>
 #include<sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include "keyfinder.h"
+#include "aes.h"
 
 
-//TODO:graceful exit and resource clean-up
-int main()
+void print_hex(unsigned char *buf,size_t s) 
 {
-  int pid=323339;
-  char mem_file[64] = {0};
-  char maps_file[64] = {0};
-  sprintf(mem_file, "/proc/%ld/mem",(long)pid);
-  sprintf(maps_file, "/proc/%ld/maps",(long)pid);
-  printf("mem_file name is %s",mem_file);
-  printf("maps_file name is %s",maps_file);
-
-  long ptrace_res = ptrace(PTRACE_ATTACH,pid,NULL,NULL);
-  if(ptrace_res==-1) {
-    perror("ptrace");
-    return EXIT_FAILURE;
+  for (int i=0; i<s; i++) {
+    printf("%02x,",buf[i]);
   }
-  waitpid(pid,NULL,0);
+  printf("\n");
+}
 
-  int mem_fd =open(mem_file,O_RDONLY);
-  if(mem_fd==-1) {
-    perror("open");
-    return EXIT_FAILURE;
-  }
-
-  FILE *maps_file_ptr =fopen(maps_file,"r");
-  if (maps_file_ptr == NULL) {
-    perror("fopen");
-    return EXIT_FAILURE;
-  }
-
-  int buf_len=255;
-  char buffer[buf_len];
-  while(fgets(buffer,buf_len,maps_file_ptr)) {
-    unsigned long start_addr;
-    unsigned long end_addr;
-    char perms[5]={0};
-    sscanf(buffer,"%lx-%lx %s\n",&start_addr,&end_addr,perms);
-    //printf("start=%lu,end=%lu,perms=%s\n",start_addr,end_addr,perms);
-
-    if (strstr(perms,"rw")!=NULL){
-      printf("line---%s\n",buffer);
-      //printf("read write section---");
-      char buf[1024];
-      unsigned long offset = start_addr;
-      int seek_result = lseek(mem_fd,offset,SEEK_SET);
-      if (seek_result == -1) {
-	perror("lseek");
-	return EXIT_FAILURE;
-      }
-
-      int read_result = read(mem_fd,buf,sizeof(buf));
-
-      if(read_result==-1) {
-	perror("read");
-	return EXIT_FAILURE;
+bool check_aes_128_key_expantion(uint8_t *buffer,size_t size) 
+{
+  uint8_t all_keys[176]={0};
+  uint8_t first_key[16]={0};
+  for (int i=0; i<size; i++) {
+    printf("buffer window=%d\n",i);
+    uint8_t expanded_key[16]={0};
+    memcpy(first_key,buffer+i,16);
+    printf("candidate key=");
+    print_hex(first_key,16);
+    memset(all_keys,0,176);
+    memcpy(all_keys,first_key,16);
+    memcpy(expanded_key,first_key,16);
+    for (int round=1; round<11; round++) {
+      expand_key(round,expanded_key);
+      printf("expanded key=");
+      print_hex(expanded_key,16);
+      memcpy(all_keys+(round*16),expanded_key,16);
+      printf("all keys=");
+      print_hex(all_keys,16*(round+1));
+      if(memcmp(buffer+i,all_keys,round*16+16)!=0)
+	break;
+      if (round==10) {
+	return true;
       }
     }
   }
-
-  fclose(maps_file_ptr);
-
-
-  if(close(mem_fd)==-1) {
-    perror("close");
-    return EXIT_FAILURE;
-  }
-
-  ptrace(PTRACE_DETACH,pid,NULL,NULL);
-
-  return EXIT_SUCCESS;
+  return false;
 }

@@ -1,0 +1,11 @@
+bin/configlet
+bin/configlet.exe
+build/
+**/*.out
+tests.out*
+*.dSYM
+**/*.o
+.DS_Store
+keyfinder
+*.asm
+*.swp
