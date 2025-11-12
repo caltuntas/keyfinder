@@ -14,38 +14,38 @@
 
 void print_hex(unsigned char *buf,size_t s) 
 {
-  for (int i=0; i<s; i++) {
-    printf("%02x,",buf[i]);
-  }
-  printf("\n");
+	for (int i=0; i<s; i++) {
+		printf("%02x,",buf[i]);
+	}
+	printf("\n");
 }
 
-bool check_aes_128_key_expantion(uint8_t *buffer,size_t size) 
+key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size) 
 {
-  uint8_t all_keys[176]={0};
-  uint8_t first_key[16]={0};
-  for (int i=0; i<size; i++) {
-    printf("buffer window=%d\n",i);
-    uint8_t expanded_key[16]={0};
-    memcpy(first_key,buffer+i,16);
-    printf("candidate key=");
-    print_hex(first_key,16);
-    memset(all_keys,0,176);
-    memcpy(all_keys,first_key,16);
-    memcpy(expanded_key,first_key,16);
-    for (int round=1; round<11; round++) {
-      expand_key(round,expanded_key);
-      printf("expanded key=");
-      print_hex(expanded_key,16);
-      memcpy(all_keys+(round*16),expanded_key,16);
-      printf("all keys=");
-      print_hex(all_keys,16*(round+1));
-      if(memcmp(buffer+i,all_keys,round*16+16)!=0)
-	break;
-      if (round==10) {
-	return true;
-      }
-    }
-  }
-  return false;
+	uint8_t all_keys[176]={0};
+	uint8_t first_key[16]={0};
+	for (int i=0; i<size; i++) {
+		printf("buffer window=%d\n",i);
+		uint8_t expanded_key[16]={0};
+		memcpy(first_key,buffer+i,16);
+		printf("candidate key=");
+		print_hex(first_key,16);
+		memset(all_keys,0,176);
+		memcpy(all_keys,first_key,16);
+		memcpy(expanded_key,first_key,16);
+		for (int round=1; round<11; round++) {
+			expand_key(round,expanded_key);
+			printf("expanded key=");
+			print_hex(expanded_key,16);
+			memcpy(all_keys+(round*16),expanded_key,16);
+			printf("all keys=");
+			print_hex(all_keys,16*(round+1));
+			if(memcmp(buffer+i,all_keys,round*16+16)!=0)
+				break;
+			if (round==10) {
+				return (key_search_result_t){true,i};
+			}
+		}
+	}
+	return (key_search_result_t){false,0};
 }

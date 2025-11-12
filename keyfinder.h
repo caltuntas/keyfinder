@@ -7,6 +7,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-bool check_aes_128_key_expantion(uint8_t *buf,size_t s);
+typedef struct {
+	bool found;
+	unsigned int offset;
+} key_search_result_t;
+
+key_search_result_t check_aes_128_key_expantion(uint8_t *buf,size_t s);
 
 #endif

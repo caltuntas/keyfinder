@@ -77,8 +77,8 @@ int main()
 	printf("bytes read from memory=%d\n",read_result);
 	print_hex(buf,read_result);
 	printf("--------\n");
-	bool is_aes_128 = check_aes_128_key_expantion(buf,BUFFER_SIZE);
-	if (is_aes_128) {
+	key_search_result_t is_aes_128 = check_aes_128_key_expantion(buf,BUFFER_SIZE);
+	if (is_aes_128.found) {
 	  printf("aes block is found\n");
 	}else {
 	  offset+=BUFFER_SIZE;
