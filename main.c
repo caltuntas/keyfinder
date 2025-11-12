@@ -86,7 +86,23 @@ int main(int argc, char **argv)
 
   for(int i=0; i<len;i++) {
     if (strstr(maps[i].perms,"rw")!=NULL){
+      for(int j=0; j<key_count;j++) {
+	printf("finding pointers for key[%d]",j);
+	while(offset < maps[i].end_addr-BUFFER_SIZE) {
+	  int seek_result = lseek(mem_fd,offset,SEEK_SET);
+	  if (seek_result == -1) {
+	    perror("lseek");
+	    return EXIT_FAILURE;
+	  }
 
+	  int read_result = read(mem_fd,buf,sizeof(buf));
+
+	  if(memcmp(buffer+i,all_keys,round*16+16)!=0){
+
+	  }
+	}
+
+      }
     }
   }
 
