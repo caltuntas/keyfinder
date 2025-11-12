@@ -11,6 +11,16 @@
 #include "keyfinder.h"
 #include "aes.h"
 
+void convert_uint64_to_bytes(uint64_t w,uint8_t arr[8]) {
+  arr[0] = w >> 56;
+  arr[1] = w >> 48;
+  arr[2] = w >> 40;
+  arr[3] = w >> 32;
+  arr[4] = w >> 24;
+  arr[5] = w >> 16;
+  arr[6] = w >> 8;
+  arr[7] = w >> 0;
+}
 
 void print_hex(unsigned char *buf,size_t s) 
 {
@@ -56,7 +66,11 @@ key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uint
 	return res;
 }
 
-size_t find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr)
+int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr)
 {
-  return 0;
+  for (int i=0; i<size-sizeof(uintptr_t); i++) {
+    if(memcmp(buffer+i,&ptr,sizeof(ptr))==0)
+      return i;
+  }
+  return -1;
 }

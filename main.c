@@ -54,11 +54,11 @@ int main(int argc, char **argv)
 	printf("segment start=%lx,end=%lx\n",maps[i].start_addr,maps[i].end_addr);
 	printf("remeaning bytes=%lu\n",maps[i].end_addr-offset);
 	printf("lseek offset address=%lx\n",offset);
-	printf("bytes read from memory=%d\n",read_result);
-	//print_hex(buf,read_result);
-	printf("--------\n");
 	key_search_result_t is_aes_128 = check_aes_128_key_expantion(buf,BUFFER_SIZE,offset);
 	if (is_aes_128.found) {
+	printf("bytes read from memory=%d\n",read_result);
+	print_hex(buf,read_result);
+	printf("--------\n");
 	  printf("aes block is found\n");
 	  printf("offset in block=%d\n",is_aes_128.offset);
 	  //uintptr_t key_addr = offset+is_aes_128.offset;
@@ -87,7 +87,9 @@ int main(int argc, char **argv)
   for(int i=0; i<len;i++) {
     if (strstr(maps[i].perms,"rw")!=NULL){
       for(int j=0; j<key_count;j++) {
-	printf("finding pointers for key[%d]",j);
+	printf("finding pointers for key[%d]=%lx in memory map[%d]\n",j,keys[j].address,i);
+	char buf[BUFFER_SIZE];
+	unsigned long offset = maps[i].start_addr;
 	while(offset < maps[i].end_addr-BUFFER_SIZE) {
 	  int seek_result = lseek(mem_fd,offset,SEEK_SET);
 	  if (seek_result == -1) {
@@ -96,10 +98,12 @@ int main(int argc, char **argv)
 	  }
 
 	  int read_result = read(mem_fd,buf,sizeof(buf));
-
-	  if(memcmp(buffer+i,all_keys,round*16+16)!=0){
-
+	  int os = find_pointer(buf,BUFFER_SIZE,keys[j].address);
+	  if (os>=0) {
+	    printf("start address=%lx,found offset=%d\n",maps[i].start_addr,os);
+	    printf("pointers for key[%d]=%lx\n",j,offset+os);
 	  }
+	  offset+=BUFFER_SIZE;
 	}
 
       }

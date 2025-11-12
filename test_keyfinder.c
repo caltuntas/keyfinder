@@ -133,12 +133,12 @@ static void test_find_aes_128_expanded_keys_at_the_beginnig(void)
 static void test_find_memory_address_in_buffer(void)
 {
   uint8_t buffer[BUFFER_SIZE]={0};
-  uint8_t address[8]={0x00,0x00,0x55,0x5e,0xe3,0x68,0xe0,0x00};
+  uint8_t address[8]={0};
   uintptr_t ptr = 0x555ee368e000;
-  
-	int start_offset = 0;
-	int pointer_size = sizeof(address);
-	int remaining_buffer_size = BUFFER_SIZE - (start_offset + pointer_size);
+  memcpy(address,&ptr,sizeof(ptr));
+  int start_offset = 0;
+  int pointer_size = sizeof(address);
+  int remaining_buffer_size = BUFFER_SIZE - (start_offset + pointer_size);
   memset(buffer,0xAA,start_offset);
   memcpy(buffer+start_offset,address,pointer_size);
   memset(buffer+start_offset+pointer_size,0x55,remaining_buffer_size);
@@ -153,5 +153,6 @@ int main(void)
   RUN_TEST(test_find_aes_128_expanded_keys_at_unaligned_offset);
   RUN_TEST(test_find_aes_128_expanded_keys_at_the_end);
   RUN_TEST(test_find_aes_128_expanded_keys_at_the_beginnig);
+  RUN_TEST(test_find_memory_address_in_buffer);
   return UNITY_END();
 }
