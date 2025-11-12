@@ -9,6 +9,7 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include "keyfinder.h"
+#include "process.h"
 
 
 //TODO:graceful exit and resource clean-up
@@ -17,11 +18,8 @@ int main(int argc, char **argv)
   char *str_pid = argv[1];
   int pid=strtol(str_pid,NULL,10);
   char mem_file[64] = {0};
-  char maps_file[64] = {0};
   sprintf(mem_file, "/proc/%ld/mem",(long)pid);
-  sprintf(maps_file, "/proc/%ld/maps",(long)pid);
   printf("mem_file name is %s",mem_file);
-  printf("maps_file name is %s",maps_file);
 
   long ptrace_res = ptrace(PTRACE_ATTACH,pid,NULL,NULL);
   if(ptrace_res==-1) {
@@ -36,27 +34,14 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  FILE *maps_file_ptr =fopen(maps_file,"r");
-  if (maps_file_ptr == NULL) {
-    perror("fopen");
-    return EXIT_FAILURE;
-  }
+  size_t len=0;
+  memory_map_t *maps =parse_memory_maps(pid,&len);
 
-  int buf_len=255;
-  char buffer[buf_len];
-  while(fgets(buffer,buf_len,maps_file_ptr)) {
-    unsigned long start_addr;
-    unsigned long end_addr;
-    char perms[5]={0};
-    sscanf(buffer,"%lx-%lx %s\n",&start_addr,&end_addr,perms);
-    //printf("start=%lu,end=%lu,perms=%s\n",start_addr,end_addr,perms);
-
-    if (strstr(perms,"rw")!=NULL){
-      printf("line---%s\n",buffer);
-      //printf("read write section---");
+  for(int i=0; i<len;i++) {
+    if (strstr(maps[i].perms,"rw")!=NULL){
       char buf[BUFFER_SIZE];
-      unsigned long offset = start_addr;
-      while(offset < end_addr-BUFFER_SIZE) {
+      unsigned long offset = maps[i].start_addr;
+      while(offset < maps[i].end_addr-BUFFER_SIZE) {
 	int seek_result = lseek(mem_fd,offset,SEEK_SET);
 	if (seek_result == -1) {
 	  perror("lseek");
@@ -64,8 +49,8 @@ int main(int argc, char **argv)
 	}
 
 	int read_result = read(mem_fd,buf,sizeof(buf));
-	printf("segment start=%lx,end=%lx\n",start_addr,end_addr);
-	printf("remeaning bytes=%lu\n",end_addr-offset);
+	printf("segment start=%lx,end=%lx\n",maps[i].start_addr,maps[i].end_addr);
+	printf("remeaning bytes=%lu\n",maps[i].end_addr-offset);
 	printf("lseek offset address=%lx\n",offset);
 	printf("bytes read from memory=%d\n",read_result);
 	//print_hex(buf,read_result);
@@ -74,7 +59,11 @@ int main(int argc, char **argv)
 	if (is_aes_128.found) {
 	  printf("aes block is found\n");
 	  printf("offset in block=%d\n",is_aes_128.offset);
-	  printf("key address=%lx\n",offset+is_aes_128.offset);
+	  uintptr_t key_addr = offset+is_aes_128.offset;
+	  void *key_ptr = (void*)key_addr;
+	  //uintptr_t iv_addr = key_addr - 0x50;
+	  printf("key address=%lx\n",key_addr);
+	  //printf("iv address=%lx\n",iv_addr);
 	  printf("key=");
 	  print_hex(is_aes_128.key,16);
 	  //return EXIT_SUCCESS;
@@ -89,8 +78,6 @@ int main(int argc, char **argv)
       }
     }
   }
-
-  fclose(maps_file_ptr);
 
 
   if(close(mem_fd)==-1) {
