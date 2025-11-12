@@ -10,10 +10,11 @@
 typedef struct {
 	bool found;
 	unsigned int offset;
+	uintptr_t address;
 	uint8_t key[16];
 } key_search_result_t;
 
-key_search_result_t check_aes_128_key_expantion(uint8_t *buf,size_t s);
+key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
 void print_hex(unsigned char *buf,size_t s);
 
 #endif

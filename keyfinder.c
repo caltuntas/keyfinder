@@ -21,9 +21,9 @@ void print_hex(unsigned char *buf,size_t s)
 }
 
 //TODO:what if key starts at the end of current buffer and goes beyond the next?
-key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size) 
+key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uintptr_t base_addr) 
 {
-	key_search_result_t res = {false,0,{0}};
+	key_search_result_t res = {false,0,0,{0}};
 	uint8_t all_keys[176]={0};
 	uint8_t first_key[16]={0};
 	for (int i=0; i<size-175; i++) {
@@ -47,6 +47,7 @@ key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size)
 			if (round==10) {
 				res.found =true;
 				res.offset=i;
+				res.address = base_addr+i;
 				memcpy(res.key,first_key,16); 
 				return res;
 			}
