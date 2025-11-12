@@ -1,6 +1,6 @@
 CFLAGS = -g
 all:
-	cc $(CFLAGS) main.c keyfinder.c -o keyfinder
+	cc $(CFLAGS) main.c keyfinder.c aes.c -o keyfinder
 
 test:
 	cc -g test-framework/unity.c keyfinder.c aes.c test_keyfinder.c -o test_keyfinder.out

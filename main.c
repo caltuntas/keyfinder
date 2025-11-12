@@ -11,18 +11,11 @@
 #include "keyfinder.h"
 
 
-void print_hex(unsigned char *buf,size_t s) 
-{
-  for (int i=0; i<s; i++) {
-    printf("%02x,",buf[i]);
-  }
-  printf("\n");
-}
-
 //TODO:graceful exit and resource clean-up
-int main()
+int main(int argc, char **argv)
 {
-  int pid=323339;
+  char *str_pid = argv[1];
+  int pid=strtol(str_pid,NULL,10);
   char mem_file[64] = {0};
   char maps_file[64] = {0};
   sprintf(mem_file, "/proc/%ld/mem",(long)pid);
@@ -71,18 +64,23 @@ int main()
 	}
 
 	int read_result = read(mem_fd,buf,sizeof(buf));
-	printf("segment start=%x,end=%x\n",start_addr,end_addr);
+	printf("segment start=%lx,end=%lx\n",start_addr,end_addr);
 	printf("remeaning bytes=%lu\n",end_addr-offset);
-	printf("lseek offset address=%x\n",offset);
+	printf("lseek offset address=%lx\n",offset);
 	printf("bytes read from memory=%d\n",read_result);
-	print_hex(buf,read_result);
+	//print_hex(buf,read_result);
 	printf("--------\n");
 	key_search_result_t is_aes_128 = check_aes_128_key_expantion(buf,BUFFER_SIZE);
 	if (is_aes_128.found) {
 	  printf("aes block is found\n");
-	}else {
-	  offset+=BUFFER_SIZE;
+	  printf("offset in block=%d\n",is_aes_128.offset);
+	  printf("key address=%lx\n",offset+is_aes_128.offset);
+	  printf("key=");
+	  print_hex(is_aes_128.key,16);
+	  //return EXIT_SUCCESS;
 	}
+
+	offset+=BUFFER_SIZE;
 
 	if(read_result==-1) {
 	  perror("read");
