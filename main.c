@@ -102,6 +102,19 @@ int main(int argc, char **argv)
 	  if (os>=0) {
 	    printf("start address=%lx,found offset=%d\n",maps[i].start_addr,os);
 	    printf("pointers for key[%d]=%lx\n",j,offset+os);
+	    uintptr_t key_addr = offset+os;
+	    void *key_ptr = (void*)key_addr;
+	    uintptr_t iv_addr = key_addr - 0x50;
+	    printf("iv address=%lx\n",iv_addr);
+	  seek_result = lseek(mem_fd,iv_addr,SEEK_SET);
+	  if (seek_result == -1) {
+	    perror("lseek");
+	    return EXIT_FAILURE;
+	  }
+	    uint8_t iv[16]={0};
+	  read_result = read(mem_fd,iv,sizeof(iv));
+	    printf("iv value=");
+	    print_hex(iv,16);
 	  }
 	  offset+=BUFFER_SIZE;
 	}
