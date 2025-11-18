@@ -79,11 +79,10 @@ void add_memory_map(memory_map_list_t *list,uintptr_t start,uintptr_t end,char p
     list->capacity*=2;
     list->maps=realloc(list->maps,list->capacity*sizeof(memory_map_t));
   }
-  memory_map_t *map=malloc(sizeof(*map));
+  memory_map_t *map=&list->maps[list->count++];
   map->start_addr =start;
   map->end_addr =end;
   memcpy(map->perms,perms,5); 
-  list->maps[list->count++]=*map;
 }
 
 memory_map_list_t* parse_memory_maps(int pid)
