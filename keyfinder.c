@@ -73,18 +73,21 @@ memory_map_list_t *init_memory_map_list(size_t capacity)
   return mmlist;
 }
 
-void add_memory_map(memory_map_list_t *list,memory_map_t *map)
+void add_memory_map(memory_map_list_t *list,uintptr_t start,uintptr_t end,char perms[5])
 {
   if(list->count>=list->capacity){
     list->capacity*=2;
     list->maps=realloc(list->maps,list->capacity*sizeof(memory_map_t));
   }
+  memory_map_t *map=malloc(sizeof(*map));
+  map->start_addr =start;
+  map->end_addr =end;
+  memcpy(map->perms,perms,5); 
   list->maps[list->count++]=*map;
 }
 
 memory_map_list_t* parse_memory_maps(int pid)
 {
-  //memory_map_t *maps =calloc(500,sizeof(*maps));
   memory_map_list_t *maps =init_memory_map_list(100);
   char maps_file[64] = {0};
   sprintf(maps_file, "/proc/%ld/maps",(long)pid);
@@ -102,15 +105,10 @@ memory_map_list_t* parse_memory_maps(int pid)
     uintptr_t end;
     char perms[5]={0};
     sscanf(buffer,"%lx-%lx %s\n",&start,&end,perms);
-    memory_map_t *map=malloc(sizeof(*map));
-    map->start_addr =start;
-    map->end_addr =end;
-    memcpy(map->perms,perms,5); 
-    add_memory_map(maps,map);
-    //printf("start=%lu,end=%lu,perms=%s\n",start_addr,end_addr,perms);
+    if (strstr(perms,"rw")!=NULL){
+      add_memory_map(maps,start,end,perms);
+    }
   }
-
-
   fclose(maps_file_ptr);
   return maps;
 }

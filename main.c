@@ -39,7 +39,6 @@ int main(int argc, char **argv)
   int key_count=0;
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
-    if (strstr(map.perms,"rw")!=NULL){
       char buf[BUFFER_SIZE];
       unsigned long offset = map.start_addr;
       while(offset < map.end_addr-BUFFER_SIZE) {
@@ -80,7 +79,6 @@ int main(int argc, char **argv)
 	  return EXIT_FAILURE;
 	}
       }
-    }
   }
 
   for(int i=0; i<maps->count;i++) {
