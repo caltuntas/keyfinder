@@ -42,13 +42,13 @@ key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uint
       //printf("all keys=");
       //print_hex(all_keys,16*(round+1));
       if(memcmp(buffer+i,all_keys,round*16+16)!=0)
-	break;
+        break;
       if (round==10) {
-	res.found =true;
-	res.offset=i;
-	res.address = base_addr+i;
-	memcpy(res.key,first_key,16); 
-	return res;
+        res.found =true;
+        res.offset=i;
+        res.address = base_addr+i;
+        memcpy(res.key,first_key,16); 
+        return res;
       }
     }
   }
@@ -96,10 +96,8 @@ memory_map_list_t* parse_memory_maps(int pid)
     perror("fopen");
     return NULL;
   }
-
   int buf_len=255;
   char buffer[buf_len];
-  size_t counter=0;
   while(fgets(buffer,buf_len,maps_file_ptr)) {
     uintptr_t start;
     uintptr_t end;
