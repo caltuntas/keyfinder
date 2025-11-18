@@ -11,17 +11,6 @@
 #include "keyfinder.h"
 #include "aes.h"
 
-void convert_uint64_to_bytes(uint64_t w,uint8_t arr[8]) {
-  arr[0] = w >> 56;
-  arr[1] = w >> 48;
-  arr[2] = w >> 40;
-  arr[3] = w >> 32;
-  arr[4] = w >> 24;
-  arr[5] = w >> 16;
-  arr[6] = w >> 8;
-  arr[7] = w >> 0;
-}
-
 void print_hex(unsigned char *buf,size_t s) 
 {
 	for (int i=0; i<s; i++) {
@@ -73,4 +62,36 @@ int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr)
       return i;
   }
   return -1;
+}
+
+memory_map_t* parse_memory_maps(int pid,size_t * const len)
+{
+  memory_map_t *maps =calloc(500,sizeof(*maps));
+  char maps_file[64] = {0};
+  sprintf(maps_file, "/proc/%ld/maps",(long)pid);
+  FILE *maps_file_ptr =fopen(maps_file,"r");
+  if (maps_file_ptr == NULL) {
+    perror("fopen");
+    return NULL;
+  }
+
+  int buf_len=255;
+  char buffer[buf_len];
+  size_t counter=0;
+  while(fgets(buffer,buf_len,maps_file_ptr)) {
+    unsigned long start_addr;
+    unsigned long end_addr;
+    char perms[5]={0};
+    sscanf(buffer,"%lx-%lx %s\n",&start_addr,&end_addr,perms);
+    maps[counter].start_addr =start_addr;
+    maps[counter].end_addr =end_addr;
+    memcpy(maps[counter].perms,perms,5); 
+    //printf("start=%lu,end=%lu,perms=%s\n",start_addr,end_addr,perms);
+    counter++;
+    *len=counter;
+   }
+
+
+  fclose(maps_file_ptr);
+  return maps;
 }
