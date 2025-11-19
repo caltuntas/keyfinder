@@ -23,21 +23,20 @@ void print_hex(unsigned char *buf,size_t s)
 key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uintptr_t base_addr) 
 {
   key_search_result_t res = {false,0,0,{0}};
-  uint8_t all_keys[176]={0};
+  uint8_t candidate[16]={0};
   uint8_t key[16]={0};
   for (int i=0; i<size-175; i++) {
-    memcpy(key,buffer+i,16);
-    memcpy(all_keys,key,16);
+    memcpy(candidate,buffer+i,16);
+    memcpy(key,candidate,16);
     for (int round=1; round<11; round++) {
       expand_key(round,key);
-      memcpy(all_keys+(round*16),key,16);
-      if(memcmp(buffer+i,all_keys,round*16+16)!=0)
+      if(memcmp(buffer+i+round*16,key,16)!=0)
         break;
       if (round==10) {
         res.found =true;
         res.offset=i;
         res.address = base_addr+i;
-        memcpy(res.key,all_keys,16); 
+        memcpy(res.key,candidate,16); 
         return res;
       }
     }
