@@ -48,28 +48,20 @@ int main(int argc, char **argv)
       }
 
       int read_result = read(mem_fd,buf,sizeof(buf));
+      if(read_result==-1) {
+        perror("read");
+        return EXIT_FAILURE;
+      }
+
       printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
       printf("remeaning bytes=%lu\n",map.end_addr-offset);
       printf("lseek offset address=%lx\n",offset);
       aes_128_key_t* aes_key = find_aes_128_keys(buf,BUFFER_SIZE,offset);
       if (aes_key) {
-        printf("bytes read from memory=%d\n",read_result);
-        print_hex(buf,read_result);
-        printf("--------\n");
-        printf("aes block is found\n");
-        printf("offset in block=%d\n",aes_key->offset);
-        printf("key address=%lx\n",aes_key->address);
-        printf("key=");
-        print_hex(aes_key->key,16);
+	print_key(aes_key);
 	add_aes_128_key(keylist,aes_key);
       }
-
       offset+=BUFFER_SIZE;
-
-      if(read_result==-1) {
-        perror("read");
-        return EXIT_FAILURE;
-      }
     }
   }
 

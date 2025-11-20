@@ -23,6 +23,15 @@ void print_hex(unsigned char *buf,size_t s)
   printf("\n");
 }
 
+void print_key(aes_128_key_t *aes_key) 
+{
+  printf("aes block is found\n");
+  printf("offset in block=%d\n",aes_key->offset);
+  printf("key address=%lx\n",aes_key->address);
+  printf("key=");
+  print_hex(aes_key->key,16);
+}
+
 //TODO:what if key starts at the end of current buffer and goes beyond the next?
 aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) 
 {
@@ -81,6 +90,7 @@ void add_aes_128_key(key_list_t *list,aes_128_key_t *key)
     list->keys=realloc(list->keys,list->capacity*sizeof(aes_128_key_t));
   }
   memcpy(&list->keys[list->count++],key,sizeof(aes_128_key_t));
+  free(key);
 }
 
 void add_memory_map(memory_map_list_t *list,uintptr_t start,uintptr_t end,char perms[5])

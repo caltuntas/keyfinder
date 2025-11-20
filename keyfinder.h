@@ -34,6 +34,7 @@ typedef struct {
 aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
 int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr);
 void print_hex(unsigned char *buf,size_t s);
+void print_key(aes_128_key_t *aes_key);
 memory_map_list_t* parse_memory_maps(int pid);
 void add_aes_128_key(key_list_t *list,aes_128_key_t *key);
 key_list_t *init_key_list(size_t capacity);
