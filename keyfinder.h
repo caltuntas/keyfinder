@@ -38,4 +38,6 @@ void print_key(aes_128_key_t *aes_key);
 memory_map_list_t* parse_memory_maps(int pid);
 void add_aes_128_key(key_list_t *list,aes_128_key_t *key);
 key_list_t *init_key_list(size_t capacity);
+int open_memory(int pid);
+void scan_memory(int mem_fd,memory_map_list_t *maps,key_list_t *keylist);
 #endif

@@ -16,9 +16,6 @@ int main(int argc, char **argv)
 {
   char *str_pid = argv[1];
   int pid=strtol(str_pid,NULL,10);
-  char mem_file[64] = {0};
-  sprintf(mem_file, "/proc/%ld/mem",(long)pid);
-  printf("mem_file name is %s",mem_file);
 
   long ptrace_res = ptrace(PTRACE_ATTACH,pid,NULL,NULL);
   if(ptrace_res==-1) {
@@ -27,44 +24,11 @@ int main(int argc, char **argv)
   }
   waitpid(pid,NULL,0);
 
-  int mem_fd =open(mem_file,O_RDONLY);
-  if(mem_fd==-1) {
-    perror("open");
-    return EXIT_FAILURE;
-  }
-
   memory_map_list_t *maps =parse_memory_maps(pid);
   key_list_t *keylist=init_key_list(10);
 
-  for(int i=0; i<maps->count;i++) {
-    memory_map_t map =maps->maps[i];
-    char buf[BUFFER_SIZE];
-    unsigned long offset = map.start_addr;
-    while(offset < map.end_addr-BUFFER_SIZE) {
-      int seek_result = lseek(mem_fd,offset,SEEK_SET);
-      if (seek_result == -1) {
-        perror("lseek");
-        return EXIT_FAILURE;
-      }
-
-      int read_result = read(mem_fd,buf,sizeof(buf));
-      if(read_result==-1) {
-        perror("read");
-        return EXIT_FAILURE;
-      }
-
-      printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
-      printf("remeaning bytes=%lu\n",map.end_addr-offset);
-      printf("lseek offset address=%lx\n",offset);
-      aes_128_key_t* aes_key = find_aes_128_keys(buf,BUFFER_SIZE,offset);
-      if (aes_key) {
-	print_key(aes_key);
-	add_aes_128_key(keylist,aes_key);
-      }
-      offset+=BUFFER_SIZE;
-    }
-  }
-
+  int mem_fd=open_memory(pid);
+  scan_memory(mem_fd,maps,keylist);
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
     for(int j=0; j<keylist->count;j++) {

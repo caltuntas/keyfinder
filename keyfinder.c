@@ -129,3 +129,45 @@ memory_map_list_t* parse_memory_maps(int pid)
   fclose(maps_file_ptr);
   return maps;
 }
+
+int open_memory(int pid)
+{
+  char mem_file[64] = {0};
+  sprintf(mem_file, "/proc/%ld/mem",(long)pid);
+  int mem_fd =open(mem_file,O_RDONLY);
+  if(mem_fd==-1) {
+    perror("open");
+    return EXIT_FAILURE;
+  }
+  return mem_fd;
+}
+
+void scan_memory(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
+{
+  for(int i=0; i<maps->count;i++) {
+    memory_map_t map =maps->maps[i];
+    char buf[BUFFER_SIZE];
+    unsigned long offset = map.start_addr;
+    while(offset < map.end_addr-BUFFER_SIZE) {
+      int seek_result = lseek(mem_fd,offset,SEEK_SET);
+      if (seek_result == -1) {
+        perror("lseek");
+        return;
+      }
+      int read_result = read(mem_fd,buf,sizeof(buf));
+      if(read_result==-1) {
+        perror("read");
+        return;
+      }
+      printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
+      printf("remeaning bytes=%lu\n",map.end_addr-offset);
+      printf("lseek offset address=%lx\n",offset);
+      aes_128_key_t* aes_key = find_aes_128_keys(buf,BUFFER_SIZE,offset);
+      if (aes_key) {
+	print_key(aes_key);
+	add_aes_128_key(keylist,aes_key);
+      }
+      offset+=BUFFER_SIZE;
+    }
+  }
+}
