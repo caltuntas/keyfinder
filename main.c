@@ -34,9 +34,8 @@ int main(int argc, char **argv)
   }
 
   memory_map_list_t *maps =parse_memory_maps(pid);
-  aes_128_key_t keys[10]={0};
+  key_list_t *keylist=init_key_list(10);
 
-  int key_count=0;
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
     char buf[BUFFER_SIZE];
@@ -62,8 +61,7 @@ int main(int argc, char **argv)
         printf("key address=%lx\n",aes_key->address);
         printf("key=");
         print_hex(aes_key->key,16);
-        keys[key_count]=*aes_key;
-        key_count++;
+	add_aes_128_key(keylist,aes_key);
       }
 
       offset+=BUFFER_SIZE;
@@ -77,8 +75,8 @@ int main(int argc, char **argv)
 
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
-    for(int j=0; j<key_count;j++) {
-      printf("finding pointers for key[%d]=%lx in memory map[%d]\n",j,keys[j].address,i);
+    for(int j=0; j<keylist->count;j++) {
+      printf("finding pointers for key[%d]=%lx in memory map[%d]\n",j,keylist->keys[j].address,i);
       char buf[BUFFER_SIZE];
       unsigned long offset = map.start_addr;
       while(offset < map.end_addr-BUFFER_SIZE) {
@@ -89,7 +87,7 @@ int main(int argc, char **argv)
         }
 
         int read_result = read(mem_fd,buf,sizeof(buf));
-        int os = find_pointer(buf,BUFFER_SIZE,keys[j].address);
+        int os = find_pointer(buf,BUFFER_SIZE,keylist->keys[j].address);
         if (os>=0) {
           printf("start address=%lx,found offset=%d\n",map.start_addr,os);
           printf("pointers for key[%d]=%lx\n",j,offset+os);

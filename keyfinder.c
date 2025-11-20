@@ -65,6 +65,24 @@ memory_map_list_t *init_memory_map_list(size_t capacity)
   return mmlist;
 }
 
+key_list_t *init_key_list(size_t capacity)
+{
+  key_list_t *list=malloc(sizeof(*list));
+  list->keys =malloc(capacity*sizeof(aes_128_key_t));
+  list->count=0;
+  list->capacity = capacity;
+  return list;
+}
+
+void add_aes_128_key(key_list_t *list,aes_128_key_t *key)
+{
+  if(list->count>=list->capacity){
+    list->capacity*=2;
+    list->keys=realloc(list->keys,list->capacity*sizeof(aes_128_key_t));
+  }
+  memcpy(&list->keys[list->count++],key,sizeof(aes_128_key_t));
+}
+
 void add_memory_map(memory_map_list_t *list,uintptr_t start,uintptr_t end,char perms[5])
 {
   if(list->count>=list->capacity){

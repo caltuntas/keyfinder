@@ -25,8 +25,16 @@ typedef struct {
   uint8_t key[16];
 } aes_128_key_t;
 
+typedef struct {
+  aes_128_key_t *keys;
+  size_t count;
+  size_t capacity;
+} key_list_t;
+
 aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
 int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr);
 void print_hex(unsigned char *buf,size_t s);
 memory_map_list_t* parse_memory_maps(int pid);
+void add_aes_128_key(key_list_t *list,aes_128_key_t *key);
+key_list_t *init_key_list(size_t capacity);
 #endif
