@@ -11,6 +11,10 @@
 #include "keyfinder.h"
 #include "aes.h"
 
+#define KEY_SIZE 16
+static const int NUMBER_OF_ROUND_KEYS=11;
+static const int ROUND_KEY_BLOCK_SIZE=KEY_SIZE*NUMBER_OF_ROUND_KEYS;
+
 void print_hex(unsigned char *buf,size_t s) 
 {
   for (int i=0; i<s; i++) {
@@ -20,28 +24,27 @@ void print_hex(unsigned char *buf,size_t s)
 }
 
 //TODO:what if key starts at the end of current buffer and goes beyond the next?
-key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uintptr_t base_addr) 
+aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) 
 {
-  key_search_result_t res = {false,0,0,{0}};
-  uint8_t candidate[16]={0};
-  uint8_t key[16]={0};
-  for (int i=0; i<size-175; i++) {
-    memcpy(candidate,buffer+i,16);
-    memcpy(key,candidate,16);
-    for (int round=1; round<11; round++) {
+  uint8_t candidate[KEY_SIZE]={0};
+  uint8_t key[KEY_SIZE]={0};
+  for (int i=0; i<size-(ROUND_KEY_BLOCK_SIZE-1); i++) {
+    memcpy(candidate,buffer+i,KEY_SIZE);
+    memcpy(key,candidate,KEY_SIZE);
+    for (int round=1; round<NUMBER_OF_ROUND_KEYS; round++) {
       expand_key(round,key);
-      if(memcmp(buffer+i+round*16,key,16)!=0)
+      if(memcmp(buffer+i+round*KEY_SIZE,key,KEY_SIZE)!=0)
         break;
-      if (round==10) {
-        res.found =true;
-        res.offset=i;
-        res.address = base_addr+i;
-        memcpy(res.key,candidate,16); 
+      if (round==NUMBER_OF_ROUND_KEYS-1) {
+	aes_128_key_t* res = malloc(sizeof(*res));
+        res->offset=i;
+        res->address = base_addr+i;
+        memcpy(res->key,candidate,KEY_SIZE); 
         return res;
       }
     }
   }
-  return res;
+  return NULL;
 }
 
 int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr)

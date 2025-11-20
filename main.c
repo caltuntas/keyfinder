@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   }
 
   memory_map_list_t *maps =parse_memory_maps(pid);
-  key_search_result_t keys[10]={0};
+  aes_128_key_t keys[10]={0};
 
   int key_count=0;
   for(int i=0; i<maps->count;i++) {
@@ -52,24 +52,18 @@ int main(int argc, char **argv)
       printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
       printf("remeaning bytes=%lu\n",map.end_addr-offset);
       printf("lseek offset address=%lx\n",offset);
-      key_search_result_t is_aes_128 = check_aes_128_key_expantion(buf,BUFFER_SIZE,offset);
-      if (is_aes_128.found) {
+      aes_128_key_t* aes_key = find_aes_128_keys(buf,BUFFER_SIZE,offset);
+      if (aes_key) {
         printf("bytes read from memory=%d\n",read_result);
         print_hex(buf,read_result);
         printf("--------\n");
         printf("aes block is found\n");
-        printf("offset in block=%d\n",is_aes_128.offset);
-        //uintptr_t key_addr = offset+is_aes_128.offset;
-        //void *key_ptr = (void*)key_addr;
-        //uintptr_t iv_addr = key_addr - 0x50;
-        printf("key address=%lx\n",is_aes_128.address);
-        //printf("iv address=%lx\n",iv_addr);
+        printf("offset in block=%d\n",aes_key->offset);
+        printf("key address=%lx\n",aes_key->address);
         printf("key=");
-        print_hex(is_aes_128.key,16);
-        keys[key_count]=is_aes_128;
+        print_hex(aes_key->key,16);
+        keys[key_count]=*aes_key;
         key_count++;
-
-        //return EXIT_SUCCESS;
       }
 
       offset+=BUFFER_SIZE;

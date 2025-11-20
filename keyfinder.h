@@ -20,13 +20,12 @@ typedef struct {
 } memory_map_list_t;
 
 typedef struct {
-  bool found;
   unsigned int offset;
   uintptr_t address;
   uint8_t key[16];
-} key_search_result_t;
+} aes_128_key_t;
 
-key_search_result_t check_aes_128_key_expantion(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
+aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
 int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr);
 void print_hex(unsigned char *buf,size_t s);
 memory_map_list_t* parse_memory_maps(int pid);

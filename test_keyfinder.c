@@ -37,10 +37,9 @@ static void test_find_aes_128_expanded_keys_at_aligned_offset(void)
   memset(buffer,0xAA,key_start_offset);
   memcpy(buffer+key_start_offset,round_keys,expanded_keys_size);
   memset(buffer+key_start_offset+expanded_keys_size,0x55,remaining_buffer_size);
-  key_search_result_t res = check_aes_128_key_expantion(buffer,BUFFER_SIZE,ptr);
-  TEST_ASSERT_TRUE(res.found);
-  TEST_ASSERT_EQUAL_INT(key_start_offset,res.offset);
-  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res.key,16);
+  aes_128_key_t* res = find_aes_128_keys(buffer,BUFFER_SIZE,ptr);
+  TEST_ASSERT_EQUAL_INT(key_start_offset,res->offset);
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res->key,16);
 }
 
 static void test_find_aes_128_expanded_keys_at_unaligned_offset(void)
@@ -66,10 +65,9 @@ static void test_find_aes_128_expanded_keys_at_unaligned_offset(void)
   memset(buffer,0xAA,key_start_offset);
   memcpy(buffer+key_start_offset,round_keys,expanded_keys_size);
   memset(buffer+key_start_offset+expanded_keys_size,0x55,remaining_buffer_size);
-  key_search_result_t res = check_aes_128_key_expantion(buffer,BUFFER_SIZE,ptr);
-  TEST_ASSERT_TRUE(res.found);
-  TEST_ASSERT_EQUAL_INT(key_start_offset,res.offset);
-  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res.key,16);
+  aes_128_key_t* res = find_aes_128_keys(buffer,BUFFER_SIZE,ptr);
+  TEST_ASSERT_EQUAL_INT(key_start_offset,res->offset);
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res->key,16);
 }
 
 static void test_find_aes_128_expanded_keys_at_the_end(void)
@@ -95,10 +93,9 @@ static void test_find_aes_128_expanded_keys_at_the_end(void)
   memset(buffer,0xAA,key_start_offset);
   memcpy(buffer+key_start_offset,round_keys,expanded_keys_size);
   memset(buffer+key_start_offset+expanded_keys_size,0x55,remaining_buffer_size);
-  key_search_result_t res = check_aes_128_key_expantion(buffer,BUFFER_SIZE,ptr);
-  TEST_ASSERT_TRUE(res.found);
-  TEST_ASSERT_EQUAL_INT(key_start_offset,res.offset);
-  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res.key,16);
+  aes_128_key_t* res = find_aes_128_keys(buffer,BUFFER_SIZE,ptr);
+  TEST_ASSERT_EQUAL_INT(key_start_offset,res->offset);
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res->key,16);
 }
 
 static void test_find_aes_128_expanded_keys_at_the_beginnig(void)
@@ -124,10 +121,9 @@ static void test_find_aes_128_expanded_keys_at_the_beginnig(void)
   memset(buffer,0xAA,start_offset);
   memcpy(buffer+start_offset,round_keys,expanded_keys_size);
   memset(buffer+start_offset+expanded_keys_size,0x55,remaining_buffer_size);
-  key_search_result_t res = check_aes_128_key_expantion(buffer,BUFFER_SIZE,ptr);
-  TEST_ASSERT_TRUE(res.found);
-  TEST_ASSERT_EQUAL_INT(start_offset,res.offset);
-  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res.key,16);
+  aes_128_key_t* res = find_aes_128_keys(buffer,BUFFER_SIZE,ptr);
+  TEST_ASSERT_EQUAL_INT(start_offset,res->offset);
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_key,res->key,16);
 }
 
 static void test_find_memory_address_in_buffer(void)
