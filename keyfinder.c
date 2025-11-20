@@ -56,13 +56,16 @@ aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr
   return NULL;
 }
 
-int find_pointer(uint8_t *buffer,size_t size,uintptr_t ptr)
+uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,unsigned long offset)
 {
   for (int i=0; i<size-sizeof(uintptr_t); i++) {
-    if(memcmp(buffer+i,&ptr,sizeof(ptr))==0)
-      return i;
+    if(memcmp(buffer+i,&ptr,sizeof(ptr))==0){
+      uintptr_t key_addr = offset+i;
+      uintptr_t iv_addr = key_addr - 0x50;
+      return iv_addr;
+    }
   }
-  return -1;
+  return 0;
 }
 
 memory_map_list_t *init_memory_map_list(size_t capacity)
@@ -149,16 +152,7 @@ void scan_memory(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
     char buf[BUFFER_SIZE];
     unsigned long offset = map.start_addr;
     while(offset < map.end_addr-BUFFER_SIZE) {
-      int seek_result = lseek(mem_fd,offset,SEEK_SET);
-      if (seek_result == -1) {
-        perror("lseek");
-        return;
-      }
-      int read_result = read(mem_fd,buf,sizeof(buf));
-      if(read_result==-1) {
-        perror("read");
-        return;
-      }
+      read_offset(mem_fd,buf,sizeof(buf),offset);
       printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
       printf("remeaning bytes=%lu\n",map.end_addr-offset);
       printf("lseek offset address=%lx\n",offset);
@@ -170,4 +164,15 @@ void scan_memory(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
       offset+=BUFFER_SIZE;
     }
   }
+}
+
+ssize_t read_offset(int fd,void *buf,size_t count,off_t offset)
+{
+  int seek_result = lseek(fd,offset,SEEK_SET);
+  if (seek_result == -1) {
+    perror("lseek");
+    return 0;
+  }
+  int read_result = read(fd,buf,count);
+  return read_result;
 }

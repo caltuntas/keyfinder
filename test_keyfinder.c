@@ -138,8 +138,8 @@ static void test_find_memory_address_in_buffer(void)
   memset(buffer,0xAA,start_offset);
   memcpy(buffer+start_offset,address,pointer_size);
   memset(buffer+start_offset+pointer_size,0x55,remaining_buffer_size);
-  size_t res = find_pointer(buffer,BUFFER_SIZE,ptr);
-  TEST_ASSERT_EQUAL_INT(start_offset,res);
+  uintptr_t res = find_iv_addr(buffer,BUFFER_SIZE,ptr,start_offset);
+  TEST_ASSERT_EQUAL_INT(start_offset-0x50,res);
 }
 
 int main(void)

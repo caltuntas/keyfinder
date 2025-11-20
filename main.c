@@ -36,28 +36,12 @@ int main(int argc, char **argv)
       char buf[BUFFER_SIZE];
       unsigned long offset = map.start_addr;
       while(offset < map.end_addr-BUFFER_SIZE) {
-        int seek_result = lseek(mem_fd,offset,SEEK_SET);
-        if (seek_result == -1) {
-          perror("lseek");
-          return EXIT_FAILURE;
-        }
-
-        int read_result = read(mem_fd,buf,sizeof(buf));
-        int os = find_pointer(buf,BUFFER_SIZE,keylist->keys[j].address);
-        if (os>=0) {
-          printf("start address=%lx,found offset=%d\n",map.start_addr,os);
-          printf("pointers for key[%d]=%lx\n",j,offset+os);
-          uintptr_t key_addr = offset+os;
-          void *key_ptr = (void*)key_addr;
-          uintptr_t iv_addr = key_addr - 0x50;
+	read_offset(mem_fd,buf,sizeof(buf),offset);
+        uintptr_t iv_addr = find_iv_addr(buf,BUFFER_SIZE,keylist->keys[j].address,offset);
+        if (iv_addr>0) {
           printf("iv address=%lx\n",iv_addr);
-          seek_result = lseek(mem_fd,iv_addr,SEEK_SET);
-          if (seek_result == -1) {
-            perror("lseek");
-            return EXIT_FAILURE;
-          }
           uint8_t iv[16]={0};
-          read_result = read(mem_fd,iv,sizeof(iv));
+	  read_offset(mem_fd,iv,sizeof(iv),iv_addr);
           printf("iv value=");
           print_hex(iv,16);
         }
