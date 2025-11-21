@@ -8,8 +8,8 @@
 #include <stddef.h>
 
 typedef struct {
-  unsigned long start_addr;
-  unsigned long end_addr;
+  uintptr_t start_addr;
+  uintptr_t end_addr;
   char perms[5];
 } memory_map_t;
 
@@ -41,7 +41,7 @@ typedef struct evp_cipher_st {
 
 
 aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
-uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,unsigned long offset);
+uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,uintptr_t offset);
 void print_hex(unsigned char *buf,size_t s);
 void print_key(aes_128_key_t *aes_key);
 memory_map_list_t* parse_memory_maps(int pid);

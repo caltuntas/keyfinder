@@ -45,7 +45,7 @@ aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr
       if(memcmp(buffer+i+round*KEY_SIZE,key,KEY_SIZE)!=0)
         break;
       if (round==NUMBER_OF_ROUND_KEYS-1) {
-	aes_128_key_t* res = malloc(sizeof(*res));
+        aes_128_key_t* res = malloc(sizeof(*res));
         res->offset=i;
         res->address = base_addr+i;
         memcpy(res->key,candidate,KEY_SIZE); 
@@ -56,7 +56,7 @@ aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr
   return NULL;
 }
 
-uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,unsigned long offset)
+uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,uintptr_t offset)
 {
   for (int i=0; i<size-sizeof(uintptr_t); i++) {
     if(memcmp(buffer+i,&ptr,sizeof(ptr))==0){
@@ -150,7 +150,7 @@ void scan_aes_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
     char buf[BUFFER_SIZE];
-    unsigned long offset = map.start_addr;
+    uintptr_t offset = map.start_addr;
     while(offset < map.end_addr-BUFFER_SIZE) {
       read_offset(mem_fd,buf,sizeof(buf),offset);
       printf("segment start=%lx,end=%lx\n",map.start_addr,map.end_addr);
@@ -158,8 +158,8 @@ void scan_aes_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
       printf("lseek offset address=%lx\n",offset);
       aes_128_key_t* aes_key = find_aes_128_keys(buf,BUFFER_SIZE,offset);
       if (aes_key) {
-	print_key(aes_key);
-	add_aes_128_key(keylist,aes_key);
+        print_key(aes_key);
+        add_aes_128_key(keylist,aes_key);
       }
       offset+=BUFFER_SIZE;
     }
@@ -185,28 +185,28 @@ void scan_iv_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
       aes_128_key_t key=keylist->keys[j];
       printf("finding pointers for key[%d]=%lx in memory map[%d]\n",j,key.address,i);
       char buf[BUFFER_SIZE];
-      unsigned long offset = map.start_addr;
+      uintptr_t offset = map.start_addr;
       while(offset < map.end_addr-BUFFER_SIZE) {
-	read_offset(mem_fd,buf,sizeof(buf),offset);
+        read_offset(mem_fd,buf,sizeof(buf),offset);
         uintptr_t iv_addr = find_iv_addr(buf,BUFFER_SIZE,keylist->keys[j].address,offset);
         if (iv_addr>0) {
           printf("iv address=%lx\n",iv_addr);
           uint8_t iv[16]={0};
-	  read_offset(mem_fd,iv,sizeof(iv),iv_addr);
-	  print_key(&key);
+          read_offset(mem_fd,iv,sizeof(iv),iv_addr);
+          print_key(&key);
           printf("iv=");
           print_hex(iv,16);
-	  //https://github.com/openssl/openssl/blob/399781ef788b95eb376ecad0427f91cdbdc052bc/include/openssl/obj_mac.h#L3245
-	  //https://github.com/openssl/openssl/blob/b372b1f76450acdfed1e2301a39810146e28b02c/crypto/evp/evp_local.h#L24
-	  uintptr_t evp_cipher_st_ptr =0;
-	  int nid=0;
-	  int block_size=0;
-	  int key_len=0;
-	  int iv_len=0;
-	  read_offset(mem_fd,&evp_cipher_st_ptr,sizeof(evp_cipher_st_ptr),iv_addr-0x28);
+          //https://github.com/openssl/openssl/blob/399781ef788b95eb376ecad0427f91cdbdc052bc/include/openssl/obj_mac.h#L3245
+          //https://github.com/openssl/openssl/blob/b372b1f76450acdfed1e2301a39810146e28b02c/crypto/evp/evp_local.h#L24
+          uintptr_t evp_cipher_st_ptr =0;
+          int nid=0;
+          int block_size=0;
+          int key_len=0;
+          int iv_len=0;
+          read_offset(mem_fd,&evp_cipher_st_ptr,sizeof(evp_cipher_st_ptr),iv_addr-0x28);
 
-	  evp_cipher_st_t cipher;
-	  read_offset(mem_fd,&cipher,sizeof(cipher),evp_cipher_st_ptr);
+          evp_cipher_st_t cipher;
+          read_offset(mem_fd,&cipher,sizeof(cipher),evp_cipher_st_ptr);
           printf("nid=%d\n",cipher.nid);
           printf("block_size=%d\n",cipher.block_size);
           printf("key_len=%d\n",cipher.key_len);
