@@ -4,6 +4,7 @@
 #include<unistd.h>
 #include<string.h>
 #include<stdbool.h>
+#include<errno.h>
 #include<sys/stat.h>
 #include<sys/types.h>
 #include <sys/ptrace.h>
@@ -77,6 +78,11 @@ memory_map_list_t *init_memory_map_list(size_t capacity)
   return mmlist;
 }
 
+void free_memory_map_list(memory_map_list_t *list)
+{
+  free(list);
+}
+
 key_list_t *init_key_list(size_t capacity)
 {
   key_list_t *list=malloc(sizeof(*list));
@@ -85,6 +91,12 @@ key_list_t *init_key_list(size_t capacity)
   list->capacity = capacity;
   return list;
 }
+
+void free_key_list(key_list_t *list)
+{
+  free(list);
+}
+
 
 void add_aes_128_key(key_list_t *list,aes_128_key_t *key)
 {
@@ -139,10 +151,18 @@ int open_memory(int pid)
   sprintf(mem_file, "/proc/%ld/mem",(long)pid);
   int mem_fd =open(mem_file,O_RDONLY);
   if(mem_fd==-1) {
-    perror("open");
-    return EXIT_FAILURE;
+    fprintf(stderr, "open /proc/%ld/mem, %s\n", pid, strerror(errno));
   }
   return mem_fd;
+}
+
+int close_memory(int fd)
+{
+  int res=close(fd);
+  if(res==-1) {
+    fprintf(stderr, "close file descriptor %d, %s\n", fd, strerror(errno));
+  }
+  return res;
 }
 
 void scan_aes_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
