@@ -145,7 +145,7 @@ int open_memory(int pid)
   return mem_fd;
 }
 
-void scan_memory(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
+void scan_aes_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
 {
   for(int i=0; i<maps->count;i++) {
     memory_map_t map =maps->maps[i];
@@ -175,4 +175,47 @@ ssize_t read_offset(int fd,void *buf,size_t count,off_t offset)
   }
   int read_result = read(fd,buf,count);
   return read_result;
+}
+
+void scan_iv_keys(int mem_fd,memory_map_list_t *maps,key_list_t *keylist)
+{
+  for(int i=0; i<maps->count;i++) {
+    memory_map_t map =maps->maps[i];
+    for(int j=0; j<keylist->count;j++) {
+      aes_128_key_t key=keylist->keys[j];
+      printf("finding pointers for key[%d]=%lx in memory map[%d]\n",j,key.address,i);
+      char buf[BUFFER_SIZE];
+      unsigned long offset = map.start_addr;
+      while(offset < map.end_addr-BUFFER_SIZE) {
+	read_offset(mem_fd,buf,sizeof(buf),offset);
+        uintptr_t iv_addr = find_iv_addr(buf,BUFFER_SIZE,keylist->keys[j].address,offset);
+        if (iv_addr>0) {
+          printf("iv address=%lx\n",iv_addr);
+          uint8_t iv[16]={0};
+	  read_offset(mem_fd,iv,sizeof(iv),iv_addr);
+	  print_key(&key);
+          printf("iv=");
+          print_hex(iv,16);
+	  //https://github.com/openssl/openssl/blob/399781ef788b95eb376ecad0427f91cdbdc052bc/include/openssl/obj_mac.h#L3245
+	  //https://github.com/openssl/openssl/blob/b372b1f76450acdfed1e2301a39810146e28b02c/crypto/evp/evp_local.h#L24
+	  //https://github.com/openssl/openssl/blob/b372b1f76450acdfed1e2301a39810146e28b02c/include/crypto/evp.h#L131
+	  uintptr_t evp_cipher_st_ptr =0;
+	  int nid=0;
+	  int block_size=0;
+	  int key_len=0;
+	  int iv_len=0;
+	  read_offset(mem_fd,&evp_cipher_st_ptr,sizeof(evp_cipher_st_ptr),iv_addr-0x28);
+	  read_offset(mem_fd,&nid,sizeof(nid),evp_cipher_st_ptr);
+	  read_offset(mem_fd,&block_size,sizeof(block_size),evp_cipher_st_ptr+4);
+	  read_offset(mem_fd,&key_len,sizeof(key_len),evp_cipher_st_ptr+8);
+	  read_offset(mem_fd,&iv_len,sizeof(iv_len),evp_cipher_st_ptr+12);
+          printf("nid=%d\n",nid);
+          printf("block_size=%d\n",block_size);
+          printf("key_len=%d\n",key_len);
+          printf("iv_len=%d\n",iv_len);
+        }
+        offset+=BUFFER_SIZE;
+      }
+    }
+  }
 }
