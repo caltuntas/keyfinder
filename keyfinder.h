@@ -31,6 +31,15 @@ typedef struct {
   size_t capacity;
 } key_list_t;
 
+//https://github.com/openssl/openssl/blob/b372b1f76450acdfed1e2301a39810146e28b02c/include/crypto/evp.h#L131
+typedef struct evp_cipher_st {
+  int nid;
+  int block_size;
+  int key_len;
+  int iv_len;
+} evp_cipher_st_t;
+
+
 aes_128_key_t* find_aes_128_keys(uint8_t *buffer,size_t size,uintptr_t base_addr) ;
 uintptr_t find_iv_addr(uint8_t *buffer,size_t size,uintptr_t ptr,unsigned long offset);
 void print_hex(unsigned char *buf,size_t s);
